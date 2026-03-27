@@ -1,0 +1,103 @@
+{
+  "entities": {
+    "Room": {
+      "title": "Room",
+      "description": "A game room where players join to play.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "The unique 4-6 character code for the room."
+        },
+        "hostId": {
+          "type": "string",
+          "description": "The user ID of the room creator."
+        },
+        "maxNumber": {
+          "type": "number",
+          "description": "The maximum number players can choose (e.g., 21, 31, 41)."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["waiting", "playing", "finished"],
+          "description": "The current status of the game."
+        },
+        "turn": {
+          "type": "string",
+          "description": "The user ID of the player whose turn it is."
+        },
+        "turnOrder": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "The ordered list of user IDs determining play order."
+        },
+        "guesses": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "description": "The list of numbers that have already been guessed."
+        },
+        "loser": {
+          "type": "string",
+          "description": "The user ID of the player who lost the game."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the room was created."
+        }
+      },
+      "required": ["id", "hostId", "maxNumber", "status", "createdAt"]
+    },
+    "Player": {
+      "title": "Player",
+      "description": "A player inside a game room.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "The user ID of the player."
+        },
+        "displayName": {
+          "type": "string",
+          "description": "The display name of the player."
+        },
+        "photoURL": {
+          "type": "string",
+          "description": "The profile photo URL of the player."
+        },
+        "secretNumber": {
+          "type": "number",
+          "description": "The secret number chosen by the player."
+        },
+        "isEliminated": {
+          "type": "boolean",
+          "description": "Whether the player has been eliminated."
+        },
+        "joinedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the player joined the room."
+        }
+      },
+      "required": ["userId", "displayName", "photoURL", "isEliminated", "joinedAt"]
+    }
+  },
+  "firestore": {
+    "/rooms/{roomId}": {
+      "schema": {
+        "$ref": "#/entities/Room"
+      },
+      "description": "Stores all game rooms."
+    },
+    "/rooms/{roomId}/players/{userId}": {
+      "schema": {
+        "$ref": "#/entities/Player"
+      },
+      "description": "Stores players within a specific game room."
+    }
+  }
+}
