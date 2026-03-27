@@ -8,6 +8,7 @@ export interface Room {
   id: string;
   hostId: string;
   maxNumber: number;
+  requiredPlayers: number;
   status: RoomStatus;
   turn: string;
   turnOrder: string[];

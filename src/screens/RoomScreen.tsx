@@ -16,11 +16,11 @@ interface RoomScreenProps {
 
 export function RoomScreen({ roomId, user, onLeave }: RoomScreenProps) {
   const { room, players, loading } = useGame(roomId, user.uid);
-  const { joinRoom, setSecretNumber, startGame, makeGuess } = useGameActions(roomId, user.uid);
+  const { joinRoom, leaveRoom, setSecretNumber, startGame, makeGuess } = useGameActions(roomId, user.uid);
   const [hasJoined, setHasJoined] = useState(false);
 
   useEffect(() => {
-    if (!loading && room && !hasJoined) {
+    if (!loading && room && !hasJoined && room.status !== 'closed') {
       const me = players.find(p => p.userId === user.uid);
       if (!me) {
         joinRoom(user.displayName || 'Oyuncu', user.photoURL || '');
@@ -29,20 +29,28 @@ export function RoomScreen({ roomId, user, onLeave }: RoomScreenProps) {
     }
   }, [loading, room, players, user, hasJoined, joinRoom]);
 
+  const handleLeave = async () => {
+    if (room) {
+      const isHost = room.hostId === user.uid;
+      await leaveRoom(isHost);
+    }
+    onLeave();
+  };
+
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-gray-50">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent"></div>
+      <div className="flex h-screen items-center justify-center bg-slate-950">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-500 border-t-transparent"></div>
       </div>
     );
   }
 
-  if (!room) {
+  if (!room || room.status === 'closed') {
     return (
-      <div className="flex h-screen flex-col items-center justify-center bg-gray-50 p-4 text-center">
-        <h2 className="mb-2 text-2xl font-bold text-gray-900">Oda Bulunamadı</h2>
-        <p className="mb-6 text-gray-500">Bu oda kodu geçersiz veya oyun sona ermiş olabilir.</p>
-        <Button onClick={onLeave}>
+      <div className="flex h-screen flex-col items-center justify-center bg-slate-950 p-4 text-center">
+        <h2 className="mb-2 text-2xl font-bold text-white">Oda Kapandı</h2>
+        <p className="mb-6 text-slate-400">Bu oda kodu geçersiz, oyun sona ermiş veya kurucu odadan ayrılmış olabilir.</p>
+        <Button onClick={onLeave} className="bg-indigo-600 hover:bg-indigo-700 text-white">
           <ArrowLeft className="mr-2 h-4 w-4" />
           Ana Sayfaya Dön
         </Button>
@@ -60,7 +68,7 @@ export function RoomScreen({ roomId, user, onLeave }: RoomScreenProps) {
         me={me} 
         onSetSecretNumber={setSecretNumber} 
         onStartGame={() => startGame(players)} 
-        onLeave={onLeave} 
+        onLeave={handleLeave} 
       />
     );
   }
@@ -72,7 +80,7 @@ export function RoomScreen({ roomId, user, onLeave }: RoomScreenProps) {
         players={players} 
         me={me} 
         onMakeGuess={(guess) => makeGuess(guess, room, players)} 
-        onLeave={onLeave} 
+        onLeave={handleLeave} 
       />
     );
   }
@@ -83,7 +91,7 @@ export function RoomScreen({ roomId, user, onLeave }: RoomScreenProps) {
         room={room} 
         players={players} 
         me={me} 
-        onLeave={onLeave} 
+        onLeave={handleLeave} 
       />
     );
   }

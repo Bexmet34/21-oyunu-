@@ -1,5 +1,5 @@
 import { db } from '../firebase';
-import { doc, setDoc, updateDoc, writeBatch, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, updateDoc, writeBatch, serverTimestamp, deleteDoc } from 'firebase/firestore';
 import { Room, Player } from './useGame';
 
 export function useGameActions(roomId: string, userId: string) {
@@ -13,6 +13,18 @@ export function useGameActions(roomId: string, userId: string) {
       isEliminated: false,
       joinedAt: serverTimestamp()
     });
+  };
+
+  const leaveRoom = async (isHost: boolean) => {
+    if (isHost) {
+      // If host leaves, close the room
+      const rRef = doc(db, 'rooms', roomId);
+      await updateDoc(rRef, { status: 'closed' });
+    } else {
+      // If normal player leaves, remove them from players collection
+      const pRef = doc(db, 'rooms', roomId, 'players', userId);
+      await deleteDoc(pRef);
+    }
   };
 
   const setSecretNumber = async (num: number) => {
@@ -77,5 +89,5 @@ export function useGameActions(roomId: string, userId: string) {
     await batch.commit();
   };
 
-  return { joinRoom, setSecretNumber, startGame, makeGuess };
+  return { joinRoom, leaveRoom, setSecretNumber, startGame, makeGuess };
 }

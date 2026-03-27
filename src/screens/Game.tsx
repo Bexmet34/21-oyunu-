@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Room, Player } from '../hooks/useGame';
 import { Button } from '@/components/ui/button';
 import { motion } from 'motion/react';
-import { Skull, User, ArrowLeft, AlertCircle } from 'lucide-react';
+import { Skull, ArrowLeft, AlertCircle } from 'lucide-react';
 
 interface GameProps {
   room: Room;
@@ -29,15 +29,15 @@ export function Game({ room, players, me, onMakeGuess, onLeave }: GameProps) {
   const eliminatedPlayers = players.filter(p => p.isEliminated);
 
   return (
-    <div className="flex min-h-screen flex-col bg-gray-50 p-4 pt-8">
+    <div className="flex min-h-screen flex-col bg-slate-950 p-4 pt-8 text-slate-100">
       <div className="mx-auto w-full max-w-md">
         <div className="mb-6 flex items-center justify-between">
-          <Button variant="ghost" size="icon" onClick={onLeave}>
-            <ArrowLeft className="h-5 w-5 text-gray-500" />
+          <Button variant="ghost" size="icon" onClick={onLeave} className="text-slate-400 hover:text-white hover:bg-slate-800">
+            <ArrowLeft className="h-6 w-6" />
           </Button>
-          <div className="flex items-center gap-2 rounded-full bg-blue-50 px-4 py-1.5 text-blue-700">
-            <span className="text-sm font-medium">Oda:</span>
-            <span className="font-mono text-lg font-bold tracking-wider">{room.id}</span>
+          <div className="flex items-center gap-2 rounded-full bg-slate-900 border border-slate-800 px-4 py-1.5">
+            <span className="text-sm font-medium text-slate-400">Oda:</span>
+            <span className="font-mono text-lg font-bold tracking-wider text-white">{room.id}</span>
           </div>
         </div>
 
@@ -45,28 +45,30 @@ export function Game({ room, players, me, onMakeGuess, onLeave }: GameProps) {
           <motion.div 
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="mb-8 flex items-center gap-3 rounded-2xl bg-red-50 p-4 border border-red-100 text-red-800"
+            className="mb-8 flex items-center gap-4 rounded-2xl bg-red-950/50 p-5 border border-red-900/50 text-red-200 shadow-lg"
           >
-            <Skull className="h-6 w-6" />
+            <div className="bg-red-900/50 p-3 rounded-full">
+              <Skull className="h-8 w-8 text-red-400" />
+            </div>
             <div>
-              <p className="font-bold">Elendin!</p>
-              <p className="text-sm">Biri senin gizli sayını ({me.secretNumber}) söyledi.</p>
+              <p className="font-black text-xl text-red-400">ELENDİN!</p>
+              <p className="text-sm opacity-80">Biri senin gizli sayını ({me.secretNumber}) söyledi.</p>
             </div>
           </motion.div>
         )}
 
         {!amIEliminated && (
-          <div className="mb-8 flex items-center justify-between rounded-2xl bg-white p-4 shadow-sm border border-gray-100">
-            <div className="flex items-center gap-2 text-gray-600">
-              <AlertCircle className="h-5 w-5" />
-              <span className="text-sm font-medium">Gizli Sayın</span>
+          <div className="mb-8 flex items-center justify-between rounded-2xl bg-slate-900 p-5 shadow-lg border border-slate-800">
+            <div className="flex items-center gap-3 text-slate-400">
+              <AlertCircle className="h-6 w-6 text-indigo-400" />
+              <span className="text-sm font-bold uppercase tracking-wider">Gizli Sayın</span>
             </div>
-            <span className="font-mono text-2xl font-bold text-gray-900">{me?.secretNumber}</span>
+            <span className="font-mono text-3xl font-black text-white">{me?.secretNumber}</span>
           </div>
         )}
 
-        <div className="mb-8 rounded-2xl bg-white p-6 shadow-sm border border-gray-100">
-          <h2 className="mb-4 text-center text-lg font-bold text-gray-900">
+        <div className="mb-8 rounded-3xl bg-slate-900 p-6 shadow-xl border border-slate-800">
+          <h2 className={`mb-6 text-center text-xl font-black uppercase tracking-wider ${isMyTurn ? 'text-emerald-400' : 'text-slate-400'}`}>
             {isMyTurn ? "Sıra Sende!" : `${players.find(p => p.userId === room.turn)?.displayName} Seçiyor...`}
           </h2>
           
@@ -74,20 +76,23 @@ export function Game({ room, players, me, onMakeGuess, onLeave }: GameProps) {
             {Array.from({ length: room.maxNumber }, (_, i) => i + 1).map(num => {
               const isGuessed = room.guesses?.includes(num);
               const isSelected = selectedNumber === num;
+              const isMySecret = num === me?.secretNumber;
               
               return (
                 <button
                   key={num}
-                  disabled={isGuessed || !isMyTurn || amIEliminated}
+                  disabled={isGuessed || !isMyTurn || amIEliminated || isMySecret}
                   onClick={() => setSelectedNumber(num)}
                   className={`flex h-12 w-full items-center justify-center rounded-xl font-mono text-lg font-bold transition-all ${
                     isGuessed
-                      ? 'bg-gray-100 text-gray-400 opacity-50 cursor-not-allowed'
+                      ? 'bg-slate-950 text-slate-700 border border-slate-800 cursor-not-allowed'
+                      : isMySecret
+                      ? 'bg-slate-900 text-indigo-900/50 border border-slate-800 cursor-not-allowed'
                       : isSelected
-                      ? 'bg-blue-600 text-white shadow-md scale-105'
+                      ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/40 scale-110 z-10'
                       : isMyTurn && !amIEliminated
-                      ? 'bg-blue-50 text-blue-700 hover:bg-blue-100 hover:scale-105'
-                      : 'bg-gray-50 text-gray-600 cursor-default'
+                      ? 'bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white hover:scale-105 border border-slate-700'
+                      : 'bg-slate-800/50 text-slate-500 border border-slate-800/50 cursor-default'
                   }`}
                 >
                   {num}
@@ -98,8 +103,11 @@ export function Game({ room, players, me, onMakeGuess, onLeave }: GameProps) {
 
           {isMyTurn && !amIEliminated && (
             <Button 
-              className="mt-6 w-full py-6 text-lg" 
-              size="lg"
+              className={`mt-8 w-full py-6 text-lg font-bold rounded-xl transition-all ${
+                selectedNumber !== null 
+                  ? 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/30' 
+                  : 'bg-slate-800 text-slate-500 cursor-not-allowed'
+              }`}
               onClick={handleGuess} 
               disabled={selectedNumber === null}
             >
@@ -108,21 +116,21 @@ export function Game({ room, players, me, onMakeGuess, onLeave }: GameProps) {
           )}
         </div>
 
-        <div className="rounded-2xl bg-white p-6 shadow-sm border border-gray-100">
-          <h3 className="mb-4 text-sm font-bold uppercase tracking-wider text-gray-500">
+        <div className="rounded-3xl bg-slate-900 p-6 shadow-xl border border-slate-800">
+          <h3 className="mb-4 text-xs font-black uppercase tracking-widest text-slate-500">
             Kalan Oyuncular ({activePlayers.length})
           </h3>
           <div className="flex flex-wrap gap-2 mb-6">
             {activePlayers.map(p => (
               <div 
                 key={p.userId} 
-                className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium border ${
+                className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-bold border ${
                   p.userId === room.turn 
-                    ? 'border-blue-200 bg-blue-50 text-blue-700' 
-                    : 'border-gray-200 bg-gray-50 text-gray-700'
+                    ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-400 shadow-sm shadow-emerald-500/20' 
+                    : 'border-slate-700 bg-slate-800 text-slate-300'
                 }`}
               >
-                <img src={p.photoURL || ''} alt="" className="h-5 w-5 rounded-full" />
+                <img src={p.photoURL || ''} alt="" className="h-6 w-6 rounded-full bg-slate-700" />
                 {p.displayName}
               </div>
             ))}
@@ -130,14 +138,14 @@ export function Game({ room, players, me, onMakeGuess, onLeave }: GameProps) {
 
           {eliminatedPlayers.length > 0 && (
             <>
-              <h3 className="mb-4 text-sm font-bold uppercase tracking-wider text-gray-500">
+              <h3 className="mb-4 text-xs font-black uppercase tracking-widest text-slate-500">
                 Elenenler ({eliminatedPlayers.length})
               </h3>
               <div className="flex flex-wrap gap-2">
                 {eliminatedPlayers.map(p => (
                   <div 
                     key={p.userId} 
-                    className="flex items-center gap-2 rounded-full border border-red-100 bg-red-50 px-3 py-1.5 text-sm font-medium text-red-700 opacity-75"
+                    className="flex items-center gap-2 rounded-full border border-red-900/50 bg-red-950/30 px-3 py-1.5 text-sm font-medium text-red-400/80"
                   >
                     <Skull className="h-4 w-4" />
                     {p.displayName}
