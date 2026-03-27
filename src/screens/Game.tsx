@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Room, Player } from '../hooks/useGame';
 import { Button } from '@/components/ui/button';
 import { motion } from 'motion/react';
-import { Skull, ArrowLeft, AlertCircle } from 'lucide-react';
+import { Skull, ArrowLeft, AlertCircle, Eye, EyeOff } from 'lucide-react';
 
 interface GameProps {
   room: Room;
@@ -14,6 +14,7 @@ interface GameProps {
 
 export function Game({ room, players, me, onMakeGuess, onLeave }: GameProps) {
   const [selectedNumber, setSelectedNumber] = useState<number | null>(null);
+  const [showSecret, setShowSecret] = useState(false);
 
   const isMyTurn = room.turn === me?.userId;
   const amIEliminated = me?.isEliminated;
@@ -63,7 +64,18 @@ export function Game({ room, players, me, onMakeGuess, onLeave }: GameProps) {
               <AlertCircle className="h-6 w-6 text-indigo-400" />
               <span className="text-sm font-bold uppercase tracking-wider">Gizli Sayın</span>
             </div>
-            <span className="font-mono text-3xl font-black text-white">{me?.secretNumber}</span>
+            <div className="flex items-center gap-3">
+              <span className="font-mono text-3xl font-black text-white">
+                {showSecret ? me?.secretNumber : '**'}
+              </span>
+              <button 
+                onClick={() => setShowSecret(!showSecret)} 
+                className="text-slate-400 hover:text-white transition-colors"
+                title={showSecret ? "Gizle" : "Göster"}
+              >
+                {showSecret ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+            </div>
           </div>
         )}
 
@@ -81,13 +93,15 @@ export function Game({ room, players, me, onMakeGuess, onLeave }: GameProps) {
               return (
                 <button
                   key={num}
-                  disabled={isGuessed || !isMyTurn || amIEliminated || isMySecret}
-                  onClick={() => setSelectedNumber(num)}
+                  disabled={isGuessed || !isMyTurn || amIEliminated}
+                  onClick={() => {
+                    if (!isMySecret) {
+                      setSelectedNumber(num);
+                    }
+                  }}
                   className={`flex h-12 w-full items-center justify-center rounded-xl font-mono text-lg font-bold transition-all ${
                     isGuessed
                       ? 'bg-slate-950 text-slate-700 border border-slate-800 cursor-not-allowed'
-                      : isMySecret
-                      ? 'bg-slate-900 text-indigo-900/50 border border-slate-800 cursor-not-allowed'
                       : isSelected
                       ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/40 scale-110 z-10'
                       : isMyTurn && !amIEliminated
