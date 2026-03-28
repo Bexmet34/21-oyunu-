@@ -6,6 +6,7 @@ import { Home, RefreshCcw, Skull, Trophy } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { db } from '../firebase';
 import { doc, updateDoc, increment } from 'firebase/firestore';
+import { handleFirestoreError, OperationType } from '../hooks/useAuth';
 
 interface GameOverProps {
   room: Room;
@@ -39,12 +40,7 @@ export function GameOver({ room, players, me, onLeave }: GameOverProps) {
           });
           localStorage.setItem(statsKey, 'true');
         } catch (error: any) {
-          console.error("Error updating stats:", error);
-          // If it's a permission error, it might be because the user doc doesn't exist yet
-          // useAuth should handle creation, but we log it for diagnostics
-          if (error.code === 'permission-denied') {
-            console.warn("Permission denied while updating stats. This might happen if the user document is not correctly set up.");
-          }
+          handleFirestoreError(error, OperationType.UPDATE, `users/${me.userId}`);
         }
       }
     };

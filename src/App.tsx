@@ -19,8 +19,19 @@ export default function App() {
       await login(playerName.trim());
     } catch (error: any) {
       console.error("Login error:", error);
-      const errorMessage = error.message || "Bilinmeyen bir hata oluştu.";
-      alert(`Giriş yapılamadı: ${errorMessage}\n\nLütfen Firebase konsolundan 'Anonymous' (Anonim) girişin açık olduğundan emin olun.`);
+      let errorMessage = error.message || "Bilinmeyen bir hata oluştu.";
+      
+      // Check if it's a JSON error from handleFirestoreError
+      try {
+        const parsedError = JSON.parse(errorMessage);
+        if (parsedError.error && parsedError.operationType) {
+          errorMessage = `Veritabanı hatası (${parsedError.operationType}): ${parsedError.error}`;
+        }
+      } catch (e) {
+        // Not a JSON error, keep original message
+      }
+
+      alert(`Giriş yapılamadı: ${errorMessage}\n\nEğer sorun devam ederse, Firebase konsolundan 'Anonymous' (Anonim) girişin açık olduğundan emin olun.`);
     } finally {
       setIsLoggingIn(false);
     }

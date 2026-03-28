@@ -1,6 +1,7 @@
 import { db } from '../firebase';
-import { doc, setDoc, updateDoc, writeBatch, serverTimestamp, deleteDoc, increment } from 'firebase/firestore';
+import { doc, setDoc, updateDoc, writeBatch, serverTimestamp, deleteDoc } from 'firebase/firestore';
 import { Room, Player } from './useGame';
+import { handleFirestoreError, OperationType } from './useAuth';
 
 export function useGameActions(roomId: string, userId: string) {
   const joinRoom = async (displayName: string, photoURL: string) => {
@@ -15,8 +16,7 @@ export function useGameActions(roomId: string, userId: string) {
         joinedAt: serverTimestamp()
       });
     } catch (error) {
-      console.error("Join room error:", error);
-      throw error;
+      handleFirestoreError(error, OperationType.WRITE, `rooms/${roomId}/players/${userId}`);
     }
   };
 
@@ -32,8 +32,7 @@ export function useGameActions(roomId: string, userId: string) {
         await deleteDoc(pRef);
       }
     } catch (error) {
-      console.error("Leave room error:", error);
-      throw error;
+      handleFirestoreError(error, isHost ? OperationType.UPDATE : OperationType.DELETE, isHost ? `rooms/${roomId}` : `rooms/${roomId}/players/${userId}`);
     }
   };
 
@@ -42,8 +41,7 @@ export function useGameActions(roomId: string, userId: string) {
       const pRef = doc(db, 'rooms', roomId, 'players', userId);
       await updateDoc(pRef, { secretNumber: num });
     } catch (error) {
-      console.error("Set secret number error:", error);
-      throw error;
+      handleFirestoreError(error, OperationType.UPDATE, `rooms/${roomId}/players/${userId}`);
     }
   };
 
@@ -58,8 +56,7 @@ export function useGameActions(roomId: string, userId: string) {
         guesses: []
       });
     } catch (error) {
-      console.error("Start game error:", error);
-      throw error;
+      handleFirestoreError(error, OperationType.UPDATE, `rooms/${roomId}`);
     }
   };
 
@@ -109,8 +106,7 @@ export function useGameActions(roomId: string, userId: string) {
 
       await batch.commit();
     } catch (error) {
-      console.error("Make guess error:", error);
-      throw error;
+      handleFirestoreError(error, OperationType.WRITE, `rooms/${roomId} (batch)`);
     }
   };
 

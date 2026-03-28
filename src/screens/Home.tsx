@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { User } from 'firebase/auth';
 import { db } from '../firebase';
-import { doc, setDoc, serverTimestamp, collection, query, where, onSnapshot, getDoc } from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp, collection, query, where, onSnapshot } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { LogOut, Plus, LogIn, Play, ChevronDown, ChevronUp, Trophy, Skull } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { handleFirestoreError, OperationType } from '../hooks/useAuth';
 
 interface HomeProps {
   user: User;
@@ -66,8 +67,7 @@ export function Home({ user, onJoinRoom, onLogout }: HomeProps) {
       });
       onJoinRoom(roomId);
     } catch (error) {
-      console.error("Error creating room:", error);
-      alert("Oda oluşturulurken bir hata oluştu.");
+      handleFirestoreError(error, OperationType.WRITE, `rooms/${roomId}`);
     } finally {
       setLoading(false);
     }
