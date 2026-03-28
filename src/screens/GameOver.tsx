@@ -1,9 +1,11 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { Room, Player } from '../hooks/useGame';
 import { Button } from '@/components/ui/button';
 import { motion } from 'motion/react';
 import { Home, RefreshCcw, Skull, Trophy } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import { db } from '../firebase';
+import { doc, updateDoc, increment } from 'firebase/firestore';
 
 interface GameOverProps {
   room: Room;
@@ -13,11 +15,39 @@ interface GameOverProps {
 }
 
 export function GameOver({ room, players, me, onLeave }: GameOverProps) {
-  const loser = players.find(p => p.userId === room.loser);
-  const amILoser = me?.userId === room.loser;
+  // Stabilize the result to prevent flicker during unmount or status changes
+  const result = useMemo(() => {
+    const loserId = room.loser;
+    const loserPlayer = players.find(p => p.userId === loserId);
+    const isMeLoser = me?.userId === loserId;
+    return { loserPlayer, isMeLoser };
+  }, []); // Only calculate once on mount
+
+  const { loserPlayer, isMeLoser } = result;
 
   useEffect(() => {
-    if (!amILoser) {
+    // Increment stats once per room
+    const statsKey = `stats_updated_${room.id}`;
+    if (localStorage.getItem(statsKey)) return;
+
+    const updateStats = async () => {
+      if (me?.userId) {
+        try {
+          const userRef = doc(db, 'users', me.userId);
+          await updateDoc(userRef, {
+            [isMeLoser ? 'losses' : 'wins']: increment(1)
+          });
+          localStorage.setItem(statsKey, 'true');
+        } catch (error) {
+          console.error("Error updating stats:", error);
+        }
+      }
+    };
+    updateStats();
+  }, [room.id, me?.userId, isMeLoser]);
+
+  useEffect(() => {
+    if (!isMeLoser) {
       const duration = 3 * 1000;
       const end = Date.now() + duration;
 
@@ -43,7 +73,7 @@ export function GameOver({ room, players, me, onLeave }: GameOverProps) {
       };
       frame();
     }
-  }, [amILoser]);
+  }, [isMeLoser]);
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-slate-950 p-4 text-slate-100">
@@ -53,7 +83,7 @@ export function GameOver({ room, players, me, onLeave }: GameOverProps) {
         className="w-full max-w-md rounded-3xl bg-slate-900 p-8 shadow-2xl border border-slate-800 text-center"
       >
         <div className="mb-6 flex justify-center">
-          {amILoser ? (
+          {isMeLoser ? (
             <div className="rounded-full bg-red-950/50 p-6 text-red-500 border border-red-900/50 shadow-lg shadow-red-900/20">
               <Skull className="h-16 w-16" />
             </div>
@@ -64,13 +94,13 @@ export function GameOver({ room, players, me, onLeave }: GameOverProps) {
           )}
         </div>
 
-        <h1 className={`mb-2 text-4xl font-black tracking-tight ${amILoser ? 'text-red-400' : 'text-emerald-400'}`}>
-          {amILoser ? "KAYBETTİN!" : "KAZANDIN!"}
+        <h1 className={`mb-2 text-4xl font-black tracking-tight ${isMeLoser ? 'text-red-400' : 'text-emerald-400'}`}>
+          {isMeLoser ? "KAYBETTİN!" : "KAZANDIN!"}
         </h1>
         <p className="mb-8 text-slate-400 font-medium">
-          {amILoser 
+          {isMeLoser 
             ? "Sona kalan sen oldun ve mayına bastın." 
-            : `${loser?.displayName || 'Biri'} sona kaldı ve kaybetti.`}
+            : `${loserPlayer?.displayName || 'Biri'} sona kaldı ve kaybetti.`}
         </p>
 
         <div className="mb-8 rounded-2xl bg-slate-950 p-6 text-left border border-slate-800">
@@ -82,7 +112,7 @@ export function GameOver({ room, players, me, onLeave }: GameOverProps) {
               <div key={p.userId} className="flex items-center justify-between border-b border-slate-800 pb-3 last:border-0 last:pb-0">
                 <div className="flex items-center gap-3">
                   <img src={p.photoURL || ''} alt="" className="h-10 w-10 rounded-full bg-slate-800" />
-                  <span className={`font-bold ${p.userId === loser?.userId ? 'text-red-400' : 'text-slate-200'}`}>
+                  <span className={`font-bold ${p.userId === loserPlayer?.userId ? 'text-red-400' : 'text-slate-200'}`}>
                     {p.displayName} {p.userId === me?.userId && <span className="text-slate-500 font-normal">(Sen)</span>}
                   </span>
                 </div>

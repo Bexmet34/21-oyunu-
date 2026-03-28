@@ -1,5 +1,17 @@
 {
   "entities": {
+    "User": {
+      "title": "User",
+      "description": "Persistent user profile and stats",
+      "type": "object",
+      "properties": {
+        "displayName": { "type": "string" },
+        "wins": { "type": "number" },
+        "losses": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["displayName", "wins", "losses"]
+    },
     "Room": {
       "title": "Room",
       "description": "A game room where players join to play.",
@@ -87,6 +99,10 @@
     }
   },
   "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles and statistics"
+    },
     "/rooms/{roomId}": {
       "schema": {
         "$ref": "#/entities/Room"

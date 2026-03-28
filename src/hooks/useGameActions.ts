@@ -1,5 +1,5 @@
 import { db } from '../firebase';
-import { doc, setDoc, updateDoc, writeBatch, serverTimestamp, deleteDoc } from 'firebase/firestore';
+import { doc, setDoc, updateDoc, writeBatch, serverTimestamp, deleteDoc, increment } from 'firebase/firestore';
 import { Room, Player } from './useGame';
 
 export function useGameActions(roomId: string, userId: string) {

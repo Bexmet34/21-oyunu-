@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { User } from 'firebase/auth';
 import { db } from '../firebase';
-import { doc, setDoc, serverTimestamp, collection, query, where, onSnapshot } from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp, collection, query, where, onSnapshot, getDoc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { LogOut, Plus, LogIn, Play, ChevronDown, ChevronUp } from 'lucide-react';
+import { LogOut, Plus, LogIn, Play, ChevronDown, ChevronUp, Trophy, Skull } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface HomeProps {
@@ -21,12 +21,25 @@ export function Home({ user, onJoinRoom, onLogout }: HomeProps) {
   const [loading, setLoading] = useState(false);
   const [activeRooms, setActiveRooms] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<Tab>('none');
+  const [stats, setStats] = useState<{ wins: number, losses: number } | null>(null);
+
+  useEffect(() => {
+    if (user) {
+      const userRef = doc(db, 'users', user.uid);
+      const unsub = onSnapshot(userRef, (snap) => {
+        if (snap.exists()) {
+          setStats(snap.data() as any);
+        }
+      });
+      return unsub;
+    }
+  }, [user]);
 
   useEffect(() => {
     const q = query(collection(db, 'rooms'), where('status', '==', 'waiting'));
     const unsub = onSnapshot(q, (snapshot) => {
       const rooms = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-      rooms.sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
+      rooms.sort((a: any, b: any) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
       setActiveRooms(rooms.slice(0, 5)); // Show top 5 recent waiting rooms
     });
     return unsub;
@@ -74,16 +87,29 @@ export function Home({ user, onJoinRoom, onLogout }: HomeProps) {
   return (
     <div className="flex min-h-screen flex-col items-center bg-slate-950 p-4 pt-12 text-slate-100">
       <div className="w-full max-w-md">
-        <div className="mb-10 flex items-center justify-between bg-slate-900 p-4 rounded-2xl border border-slate-800 shadow-lg">
-          <div className="flex items-center gap-3">
-            <img src={user.photoURL || ''} alt="Profile" className="h-12 w-12 rounded-full bg-slate-800 border-2 border-slate-700" />
+        <div className="mb-10 flex items-center justify-between bg-slate-900 p-5 rounded-3xl border border-slate-800 shadow-xl">
+          <div className="flex items-center gap-4">
+            <div className="relative">
+              <img src={user.photoURL || ''} alt="Profile" className="h-14 w-14 rounded-2xl bg-slate-800 border-2 border-slate-700 shadow-inner" />
+              <div className="absolute -bottom-1 -right-1 h-4 w-4 rounded-full border-2 border-slate-900 bg-emerald-500"></div>
+            </div>
             <div>
-              <p className="text-xs text-slate-400 font-medium uppercase tracking-wider">Oyuncu</p>
-              <p className="font-bold text-lg text-white">{user.displayName}</p>
+              <p className="font-black text-xl text-white tracking-tight">{user.displayName}</p>
+              <div className="flex items-center gap-3 mt-1">
+                <div className="flex items-center gap-1 text-emerald-400">
+                  <Trophy className="h-3.5 w-3.5" />
+                  <span className="text-[10px] font-black uppercase tracking-widest">{stats?.wins || 0} Galibiyet</span>
+                </div>
+                <div className="h-1 w-1 rounded-full bg-slate-700"></div>
+                <div className="flex items-center gap-1 text-red-400">
+                  <Skull className="h-3.5 w-3.5" />
+                  <span className="text-[10px] font-black uppercase tracking-widest">{stats?.losses || 0} Mağlubiyet</span>
+                </div>
+              </div>
             </div>
           </div>
-          <Button variant="ghost" size="icon" onClick={onLogout} className="text-slate-400 hover:text-red-400 hover:bg-red-950/30 transition-colors">
-            <LogOut className="h-5 w-5" />
+          <Button variant="ghost" size="icon" onClick={onLogout} className="text-slate-500 hover:text-red-400 hover:bg-red-400/10 rounded-xl transition-all">
+            <LogOut className="h-6 w-6" />
           </Button>
         </div>
 
