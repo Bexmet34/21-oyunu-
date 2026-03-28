@@ -11,28 +11,42 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
+    // User profiles and statistics
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isOwner(userId);
+      allow delete: if isOwner(userId);
+    }
+
+    // Game rooms
     match /rooms/{roomId} {
       allow read: if isAuthenticated();
       
+      // Anyone authenticated can create a room
       allow create: if isAuthenticated() 
                     && request.resource.data.hostId == request.auth.uid
                     && request.resource.data.status == 'waiting';
                     
+      // Anyone authenticated can update a room (needed for guesses and status changes)
       allow update: if isAuthenticated();
       
+      // Only the host can delete a room
+      allow delete: if isAuthenticated() && resource.data.hostId == request.auth.uid;
+      
+      // Players within a room
       match /players/{userId} {
         allow read: if isAuthenticated();
         
+        // Players can only create their own entry
         allow create: if isOwner(userId) 
                       && request.resource.data.userId == request.auth.uid;
                       
+        // Anyone authenticated can update players (needed for elimination status)
         allow update: if isAuthenticated();
+        
+        // Players can only delete their own entry
+        allow delete: if isOwner(userId);
       }
-    }
-
-    match /users/{userId} {
-      allow read: if isAuthenticated();
-      allow create, update: if isOwner(userId);
     }
   }
 }

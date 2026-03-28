@@ -38,8 +38,13 @@ export function GameOver({ room, players, me, onLeave }: GameOverProps) {
             [isMeLoser ? 'losses' : 'wins']: increment(1)
           });
           localStorage.setItem(statsKey, 'true');
-        } catch (error) {
+        } catch (error: any) {
           console.error("Error updating stats:", error);
+          // If it's a permission error, it might be because the user doc doesn't exist yet
+          // useAuth should handle creation, but we log it for diagnostics
+          if (error.code === 'permission-denied') {
+            console.warn("Permission denied while updating stats. This might happen if the user document is not correctly set up.");
+          }
         }
       }
     };

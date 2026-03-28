@@ -17,9 +17,10 @@ export default function App() {
     setIsLoggingIn(true);
     try {
       await login(playerName.trim());
-    } catch (error) {
+    } catch (error: any) {
       console.error("Login error:", error);
-      alert("Giriş yapılamadı. Firebase konsolundan 'Anonymous' (Anonim) girişin açık olduğundan emin olun.");
+      const errorMessage = error.message || "Bilinmeyen bir hata oluştu.";
+      alert(`Giriş yapılamadı: ${errorMessage}\n\nLütfen Firebase konsolundan 'Anonymous' (Anonim) girişin açık olduğundan emin olun.`);
     } finally {
       setIsLoggingIn(false);
     }
